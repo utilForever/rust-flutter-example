@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'ffi.dart';
 
 void main() {
   runApp(const MyApp());
@@ -55,17 +56,12 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  late Future<int> result;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  @override
+  void initState() {
+    super.initState();
+    result = api.square(n: 5);
   }
 
   @override
@@ -106,20 +102,32 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text(
-              'You have pushed the button this many times:',
+              'square(5) is ',
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            FutureBuilder<List<dynamic>>(
+                future: Future.wait([result]),
+                builder: (context, snap) {
+                  final style = Theme.of(context).textTheme.headlineMedium;
+                  if (snap.error != null) {
+                    debugPrint(snap.error.toString());
+
+                    return Tooltip(
+                      message: snap.error.toString(),
+                      child: Text('Internal error', style: style),
+                    );
+                  }
+
+                  final data = snap.data;
+                  if (data == null) {
+                    return const CircularProgressIndicator();
+                  }
+
+                  final text = data[0] as int;
+                  return Text('$text', style: style);
+                })
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
